@@ -1,61 +1,286 @@
-# This is a sample Python script.
-from typing import Final
-from telegram import Update
-from telegram.ext import*
 
-token = '6146945562:AAEsFHQ8b3vejCUwECp_1W4AREHSfJhO3RE'
-bot_username = '@A_Nerd_Bot'
+subjects = {
+    'математика': ['Формула для обчислення відстані між двома точками в просторі',
+                   'Формула для обчислення площі трикутника за допомогою векторного добутку',
+                    'Площа прямокутника',
+                    'Знаходження координат центру кола'],
 
-async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Hello it's")
+    'фізика':     ["Закон Ома",
+                  "Рівняння Гейзенберга неозначеності",
+                  "Вивести кулонівську сталу"],
 
-# main logic
-def handel_response(text: str) -> str:
-    processed: str = text.lower()
-    if 'hello' in text:
-        return "Heyyy"
-    if "how it's going" in text:
-        return "I am still existing"
+    'філологія':  ["Утворення питального речення в англійській мові",
+                  "Різниця між іменником та прикметником",
+                  "Утворення форми множини іменників в українській мові"],
+
+    'географія':  ["5 найвищих гір в світі та їхня висота",
+                  "Найбільший материк за площею",
+                  "Країну, в якій знаходиться найбільша пустеля після Сахари",
+                  "Знаходження азимуту від точки А (x1, y1) до точки В (x2, y2)"],
+
+    'астрономія': ["Відстань між Землею та Сонцем",
+                  "Наукові місії, які здійснювалися на Місяць",
+                  "Чорні діри та їх вони виникнення"]
+}
+
+non_static_subjects = {
+    'математика': ['Знаходження координат центру кола'],
+    'фізика': [],
+    'філологія': [],
+    'географія': ["Знаходження азимуту від точки А (x1, y1) до точки В (x2, y2)"],
+    'астрономія': []
+}
+
+answers = {
+    'математика': 
+['\nAB = √(AC^2 + BC^2)',
+  """
+  \nS = 1/2 * |AB x AC| 
+  \nде S - площа трикутника, 
+  \nAB та AC - вектори, які відповідають двом сторонам трикутника, 
+  \n|AB x AC| - довжина векторного добутку AB та AC.""",
+  '\nS = ab \nде a - його ширина, \nb - його довжина',
+  """
+    \nДля знаходження координат центру кола, 
+     необхідно знати координати двох точок на колі та їх відстань між собою
+     \nЗагальна формула: \nx0 = (x1 + x2) / 2\ny0 = (y1 + y2) / 2"""],
+
+    'фізика':
+[""" 
+    I = U/R
+    I - сила електричного струму; 
+    U - електрична напруга; 
+    R - електричний опір
+      """,
+"""
+    (або принцип неозначеності Гейзенберга) - це один з\nосновних принципів квантової механіки, який говорить про те, що точності вимірювання двох спряжених змінних (наприклад, місця та імпульсу частинки) мають певний мінімальний поріг.
+    У математичному вигляді рівняння Гейзенберга неозначеності записується наступним чином:
+    Δx * Δp >= h/2π,
+      Δx - неозначеність вимірювання координати частинки,
+      Δp - неозначеність вимірювання її імпульсу,
+      h - стала Планка,
+      π - математична константа
+""",
+"""\nКулонівська стала визначається як:
+  k = 1 / (4πε₀)
+  де ε₀ - електрична стала вакууму, що має значення 8,854 x 10⁻¹² Ф/м
+  Отже, кулонівська стала k дорівнює близько 9 x 10⁹ Н·м²/Кл² 
+"""],
+
+    'філологія': 
+["""В англійській мові є два основні види питальних речень:
+Загальне питання, задавши яке, ми можемо отримати відповідь тільки YES or NO.
+Воно будується за такою схемою:
+Допоміжне дієслово + підмет + головне дієслово + другорядні члени речення
+Наприклад: Has he visited NewYork? --- No
+  Has - Допоміжне дієслово,
+  he - підмет,
+  visited - головне дієслово,
+  NewYork - другорядний член речення (у нашому випадку додаток),
+\nСпеціальне питання, задавши яке, ми прагнемо отримати певну інформацію або розгорнуту відповідь.
+Воно будується за такою схемою:
+\nСпеціальне питальне слово + допоміжне дієслово + підмет + головне дієслово + другорядні члени речення
+Наприклад: What did you eat last night? --- I ate tasty italian pasta.
+  What - спеціальне питальне слово,
+  did - допоміжне дієслово,
+  he - підмет, 
+  eat - головне дієслово,
+  last night - другорядний член речення (у нашому випадку обставина часу).
+\nРекомендую прочитати інформацію про це за посиланням https://test-english.com/grammar-points/a1/questions/
+
+""",
+"""Різниця між іменником та прикметником полягає в їх функції в реченні.
+  Іменник вказує на предмет або істоту, яка обговорюється,тоді як прикметник додає характеристики до іменника, щоб описати його.""",
+"""
+  В українській мові більшість іменників має дві форми — однину й множину.
+  В основному, іменники української мови утворюють форму множини за допомогою додавання до основи закінчення -и або -і.
+  Наприклад: рік — роки, гірлянда — гірлянди, вікно — вікна.
+  Проте є винятки:
+  Іменники, які вживаються лише в однині: абстрактні іменники, збірні іменники, речовинні іменники, власні назви людей, тварин, планет, географічні й інші поняття.
+  Іменники, які вживаються лише у множині: назви речовин та матеріалів, назви абстрактних понять, окремі види овочів та фруктів, назви деяких посад, назви географічних об'єктів.
+  Аби дізнатися більше і побачити приклади рекомендую прочитати матеріал за посиланням:
+  \n https://miyklas.com.ua/p/ukrainska-mova/10-klas/morfologichna-norma-373940/imenniki-shcho-maiut-lishe-formu-odnini-abo-mnozhini-378680/re-1d79870d-577a-4f25-9107-47ca22a89864
+"""],
+
+    'географія': 
+["""
+  Ось список 5 найвищих гір в світі за їх висотою, від найвищої до найнижчої:
+  1. Еверест - 8,848 метрів, розташований у Гімалаях на кордоні Непалу та Тибету.
+  2. Канченджунга - 8,586 метрів, розташований у Гімалаях на кордоні Непалу та Індії.
+  3. Лхотсе - 8,516 метрів, розташований у Гімалаях на кордоні Непалу та Тибету.
+  4. Макалу - 8,485 метрів, розташований у Гімалаях на кордоні Непалу та Тибету.
+  5. Чо-Ойю - 8,188 метрів, розташований на кордоні Непалу та Тибету.""",
+                  
+"Найбільший материк за площею - це Азія. Загальна площа Азії становить близько 44,5 мільйонів квадратних кілометрів.",
+
+"""Найбільша пустеля після Сахари - це Аравійська пустеля , яка розташована на території кількох країн на Аравійському півострові:
+ Саудівській Аравії"""],
+
+'астрономія':
+
+["""Відстань між Землею та Сонцем може змінюватись в залежності від положення Землі та Сонця в їх орбітах. 
+    У середньому ця відстань становить близько 149,6 мільйонів кілометрів""",
+    
+"""Ось кілька важливих наукових місій на Місяць:
+      1.Програма "Аполлон" (1969-1972): Найбільш відомі місії на Місяць, які здійснювала NASA, що включали політ людини на Місяць та збір проб місячної грунту.
+      2.Програма "Луноход" (1970-1973): Російська місія, яка відправила на Місяць рухому луноход для збору наукових даних та вивчення поверхні Місяця.
+      3.Місії "Клементайн" та "Лунний орбітер" (1994-1999): Складні наукові місії, які здійснювала NASA, включали в себе вивчення складу місячної грунту та вивчення геології та магнетизму Місяця.
+      4.Місія "Чанъе-4" (2018): Китайська місія, яка успішно вивчала позаорбітальну станцію Місяця та здійснювала дослідження на його далекому боці.
+      5.Ці наукові місії допомогли розширити наші знання про Місяць та дали важливі відомості про його склад, геологію та історію.
+""",
+ 
+""" Чорні діри - це об'єкти в космосі, які мають настільки велику гравітаційну силу, що навіть світло не може вийти з їх впливу. Вони виникають при краху великих зір.
+    В центрі кожної зірки відбуваються ядерні реакції, під час яких водень перетворюється в гелій, звільняючи енергію та тепло. 
+    Коли у зірки закінчується запас палива, її ядро починає згоряти. Якщо зірка масою більше восьми разів маси Сонця, якщо її ядро закінчило згоряти, воно вибухає в супернову.
+    Після супернової залишається нейтронна зірка, яка знаходиться в стані еквілібріуму між гравітацією та давленням дегенерованого електронного газу. 
+    Якщо зірка масою більше 20 разів маси Сонця, гравітаційна сила в нейтронній зірці стає настільки сильною, що здатна згорнути матеріал у крайньої щільності, 
+    де вона перетворюється в чорну діру.
+"""]
+}
+
+
+import math
+
+text_with_greeting = f'\n[Ньорд]: \nВітаю, мене звати Ньорд. Ви можете задати мені питання з наступних тем: {", ".join(subjects.keys())}.Також у мене є додаткові функції - які саме поки секрет'
+list_of_topics = (', '.join(subjects.keys())).split(", ")
+
+
+def greet_user():
+    print(text_with_greeting)
+    choose_subject()
+
+def choose_subject():
+    users_response = input("\n[Користувач]: ")
+    chat_with_user(users_response)
+
+
+def chat_with_user(subject):
+    if (subject.lower()).strip() not in list_of_topics:
+        print(f'\n[Ньорд]: \nВи ввели некоректні дані — "{subject}", будь ласка спробуйте ще раз')
+        choose_subject()
+    elif (subject.lower()).strip() == "назад":
+        greet_user()
     else:
-        return "I don't understand"
-
-# Lets us use the /custom command
-async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('In this section you can play game called "Guess Number"')
+        choose_topic(subject)
 
 
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message_type: str = update.message.chat.type
-    text: str = update.message.text
-
-    print(f'User ({update.message.chat.id}) in {message_type}: {text}')
-
-    if message_type == 'group':
-        if bot_username in text:
-            new_text: str = text.replace(bot_username, "").strip()
-            response: str = handel_response(new_text)
+def choose_topic(text):
+    if text in subjects:
+        print('\n[Ньорд]: \nУ цьому розділі ви можете вибрати такі підпункти:', *subjects[text], sep='\n * ')
+        #   enables us to unpack an iterable in function calls, in comprehensions and in generator expressions
+        #  like  a = ["b","c"] print(*a) => a b, print(*a, sep="* , ") => * a, * b ,
+        users_choice = input('\n[Ньорд]: \nОберіть, будь ласка, тему: \n')
+        if users_choice in subjects[text]:
+            give_answer(text, users_choice)
+        elif (text.lower()).strip() == "назад":
+          choose_topic(text)
         else:
-            return
+            print(f"\n[Ньорд]: \nВи ввели некоректні дані — '{users_choice}', будь ласка спробуйте ще раз")
+            choose_topic(text)
+
+
+def give_answer(subject, topic ):
+    answer = subjects[subject].index(topic)
+    if topic in non_static_subjects[subject]:
+      if subject == 'математика':
+        print(f"\n[Ньорд]: \n{topic}: {answers[subject][answer]}")
+        mathimatics_with_calculations(subject, topic)
+      else:
+        geography_with_calculations()
     else:
-        response: str = handel_response(text)
-    print('Bot:', response)
-    await update.message.reply_text(response)
+      print(f"\n[Ньорд]: \n{topic}: {answers[subject][answer]}")
+      to_continiue() 
+
+def to_continiue():
+  users_decision = input("\n[Ньорд]: \nБажаєте, продовжити(Так\Ні): ")
+  if (users_decision.lower()).strip() == "ні":
+    print("\n[Ньорд]: \nДякую, що порозмовляли зі мною!")
+  elif (users_decision.lower()).strip() == "так":
+    subject = input("""\n[Ньорд]: \nОберіть предмет:  математика, фізика, філологія, географія, астрономія""")
+    chat_with_user(subject)
+  else:
+    print(f"\n[Ньорд]: \nЯ вас не розумію, ваша відповідь — '{users_decision}'.Спробуйте, будь ласка, ще раз.")
+    to_continiue()
 
 
-async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print(f"Update {update} caused error {context.error}")
+def mathimatics_with_calculations(subject, topic):
+    a = get_the_data(topic)
+    list_of_x = [float(x) for x in a[0]]
+    list_of_y = [float(y) for y in a[1]]
+    print(list_of_x, list_of_y)
+    print(f"\n[Ньорд]: \nx0 = {(int(list_of_x[0]) + int(list_of_x[1]))/2 }")
+    print(f"\n[Ньорд]: \ny0 = {(int(list_of_y[0]) + int(list_of_y[1]))/2 }")
+    to_continiue()
 
-if __name__ == '__main__':
-    app = Application.builder().token(token).build()
-    app.add_handler(CommandHandler('start', start_command))
-    app.add_handler(CommandHandler('custom', custom_command))
+def geography_with_calculations(subject, topic):
+      a = get_the_data(topic)
+      list_of_x = [float(x) for x in a[0]]
+      list_of_y = [float(y) for y in a[1]]
+# x_start, y_start, x_end, y_end
+      def find_the_asymuth(x_1, x_2, y_1,y_2):
+        # обчислення різниць між координатами точок по осях x та y
+        dx = x_2 - x_1
+        dy = y_2 - y_1
+        if dx == 0: # Якщо різниця x = 0, то оцінюємо знак різниці y
+            if dy > 0: # Якщо різниця y > 0, то значення азимута дорівнює 0 
+                print(f"\n[Ньорд]: \nВаш азимут дорівнює: 0°")
+                to_continiue()
+            elif dy < 0:# Якщо різниця y < 0, то значення азимута дорівнює 180 
+                print(f"\n[Ньорд]: \nВаш азимут дорівнює: 180°")
+                to_continiue()
+        elif dy == 0: # Якщо різниця y = 0, то оцінюємо знак різниці x
+            if dx > 0: # Якщо різниця x > 0, то значення азимута дорівнює 90
+                print(f"\n[Ньорд]: \nВаш азимут дорівнює: 90°")
+                to_continiue()
+            elif dx < 0:# Якщо різниця x < 0, то значення азимута дорівнює 270
+                print(f"\n[Ньорд]: \nВаш азимут дорівнює: 270°")
+                to_continiue()
+        else:
+            tan = dy / dx
+            # обчислення арктангенсу тангенсу кута між точками
+            angle = math.atan(tan)
+            # Радіани в градуси
+            angle_degree = math.degrees(angle) 
+            if dx < 0:
+                print(f"\n[Ньорд]: \nВаш азимут дорівнює: {180 + round(angle_degree, 3)}° ")
+                to_continiue()
+            else:
+                print(f"\n[Ньорд]: \nВаш азимут дорівнює: {round(angle_degree, 3)}° ")
+                to_continiue()
 
-    # Massages
-    app.add_handler(MessageHandler(filters.TEXT, handle_message))
-    # Log all errors
-    app.add_error_handler(error)
+      find_the_asymuth(list_of_x[0], list_of_x[1], list_of_y[0], list_of_y[1])
 
-    print('Polling...')
-    # Run the bot
-    app.run_polling(poll_interval=5)
+
+def get_the_data(topic):
+    list_of_x = []
+    list_of_y = []
+    restart = True
+    r = 2
+    c = 0
+    def check_the_data(x, y):     
+      try:
+        float(x) or float(y)
+        return True
+      except ValueError:
+        return False
+
+    while restart:
+        for i in range(r):
+            x = input(f"\n[Ньорд]: \nВведіть значення точки x{i + 1 + c}: ")
+            y = input(f"\n[Ньорд]: \nВведіть значення точки y{i + 1 + c}: ")
+            restart = False
+            if check_the_data(x, y):
+                list_of_x.append(x)
+                list_of_y.append(y)
+                if len(list_of_x) == 2 and len(list_of_y) == 2:
+                  return [[list_of_x[0], list_of_x[1]],[list_of_y[0], list_of_y[1]]]   
+            else:
+                print(f"\n[Ньорд]: \nВи ввели некоректне значення, будь ласка, спробуйте ще раз")
+                if i == 0:
+                    r = 2
+                else:
+                    r = 1
+                    c = 1
+                restart = True
+                break
+greet_user()
