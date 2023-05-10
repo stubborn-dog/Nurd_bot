@@ -1,7 +1,6 @@
 import datetime
 import sys
-import colorama
-from colorama import Fore
+from colorama import *
 import math
 import re
 from data_file import subjects, answers, non_static_subjects
@@ -9,8 +8,11 @@ from data_file import subjects, answers, non_static_subjects
 list_of_topics = (', '.join(subjects.keys())).split(", ")
 list_of_help_functions = ["допомога", "назад", "вихід"]
 topic_history = []
-response = " "
+n = '\n'
 
+# ---------------------Functions for saving file-----------------------------
+
+# Function for getting data about time
 
 def get_file_time():
     date = datetime.datetime.now()
@@ -19,24 +21,27 @@ def get_file_time():
 
 
 file_name = get_file_time()
+
+# Starting saving process
 with open(file_name, 'a', encoding='utf-8') as f:
     pass
 
-
+# function which saves prints from bot to file
 def print_bots_response(text, file_output=True):
-    bots_name ='[Ньорд]'
+    text_with_colour = Fore.YELLOW + '[Ньорд]: ' + Style.RESET_ALL
+   #           -----> |making text yellow|       |reseting all styles for following text|
     if file_output:
         with open(file_name, 'a', encoding='utf-8') as f:
-            f.write(bots_name + ' ' + re.sub('\033\[[^m]*m', '', text) + '\n')
-    print(f'{bots_name}: {text}')
+            f.write('[Ньорд]:' + ' ' + re.sub('\033\[[^m]*m', '', text) + '\n\n')
+    #                                          >>>>ANSII code
+    print(f'{text_with_colour} {text}')
 
-
+# function which saves users input to file
 def get_user_input():
-    text = input("[Користувач]:")
-    plain = "[Користувач]"
+    coloured_input = input(f"{Fore.LIGHTCYAN_EX + '[Користувач]: ' + Style.RESET_ALL}")
     with open(file_name, 'a', encoding='utf-8') as f:
-        f.write(plain + re.sub('\033\[[^m]*m', '', text) + '\n')
-    return text
+        f.write("[Користувач]:" + re.sub('\033\[[^m]*m', '', coloured_input) + '\n\n')
+    return coloured_input
 
 
 def go_help_fun(text, topic_history):
@@ -73,13 +78,15 @@ def print_help(topic_history):
 
     help_message += f"""\nДля виходу, напишіть «вихід».\nДля повернення до останньої теми напишіть «назад»."""
     print_bots_response(help_message)
-    to_continiue(topic_history)
+    to_continue(topic_history)
 
 
 def greet_user():
-    text_with_greeting = f'\nВітаю, мене звати Ньорд. Ви можете задати мені питання з наступних тем: {", ".join(subjects.keys())}.Також у мене є додаткові функції - які саме поки секрет'
-    print_bots_response(text_with_greeting)
-    print(topic_history)
+    print_bots_response(f"""
+\nВітаю, мене звати Ньорд. Ви можете задати мені питання з наступних тем:
+{n.join(["  * " + item for item in subjects])}.
+\nТакож у мене є додаткові функції - які саме поки секрет
+    """)
     choose_subject(get_user_input(), topic_history)
 
 
@@ -88,25 +95,19 @@ def choose_subject(subject, topic_history):
     if subject.lower() in list_of_help_functions:
         go_help_fun(subject, topic_history)
     elif subject.lower() not in list_of_topics:
-        print_bots_response(f'Ви ввели некоректні дані — "{subject}", будь ласка, спробуйте ще раз. \nОберіть предмет:  математика, фізика, філологія, географія, астрономія')
+        print_bots_response(f'Ви ввели некоректні дані — "{subject}", будь ласка, спробуйте ще раз. \nОберіть предмет:\n{n.join(["  * " + item for item in subjects])}')
         choose_subject(get_user_input(), topic_history)
     else:
         topic_history.append(subject)
-        print(topic_history)
         choose_topic(subject, topic_history)
 
 
 def choose_topic(text, topic_history):
-    print(topic_history)
-    print_bots_response(f"Обраний розділ: {text}")
-    print_bots_response("\n *".join([*subjects[text]]))
-    print_bots_response('\nОберіть, будь ласка, тему: \n')
+    print_bots_response(f'Обраний розділ:{text}\nОберіть, будь ласка, тему:\n{n.join(["  * " + item for item in subjects[text]])}')
     users_choice = get_user_input()
     if users_choice.lower() in list_of_help_functions:
-        print(topic_history)
         go_help_fun(users_choice, topic_history)
     elif users_choice in subjects[text]:
-        print(topic_history)
         give_answer(text, users_choice, topic_history)
     else:
         print_bots_response(f"\nВи ввели некоректні дані — '{users_choice}', будь ласка спробуйте ще раз")
@@ -123,11 +124,11 @@ def give_answer(subject, topic, topic_history):
             geography_with_calculations(subject, topic)
     else:
         print_bots_response(f"\n[Ньорд]: \n{topic}: {answers[subject][answer]}")
-        to_continiue(topic_history)
+        to_continue(topic_history)
 
 
-# Function which asks whether our user wants to countiniue
-def to_continiue(topic_history):
+# Function which asks whether our user wants to continue
+def to_continue(topic_history):
     print_bots_response("Бажаєте, продовжити(Так\Ні): ")
     users_decision = get_user_input()
     if users_decision.lower() in list_of_help_functions:
@@ -135,12 +136,12 @@ def to_continiue(topic_history):
     elif (users_decision.lower()).strip() == "ні":
         to_exit()
     elif (users_decision.lower()).strip() == "так":
-        print_bots_response("""\nОберіть предмет:  математика, фізика, філологія, географія, астрономія""")
+        print_bots_response(f"""Оберіть предмет:\n{n.join(["  * " + item for item in subjects])}""")
         subject = get_user_input()
         choose_subject(subject, topic_history)
     else:
         print_bots_response(f"\nЯ вас не розумію, ваша відповідь — '{users_decision}'.Спробуйте, будь ласка, ще раз.")
-        to_continiue(topic_history)
+        to_continue(topic_history)
 
 
 # function which ends conversation with bot
@@ -154,13 +155,14 @@ def mathimatics_with_calculations(subject, topic):
     list_of_y = [float(y) for y in a[1]]
     print_bots_response(f"\n[Ньорд]: \nx0 = {(int(list_of_x[0]) + int(list_of_x[1])) / 2}")
     print_bots_response(f"\n[Ньорд]: \ny0 = {(int(list_of_y[0]) + int(list_of_y[1])) / 2}")
-    to_continiue(topic_history)
+    to_continue(topic_history)
 
 
 def geography_with_calculations(subject, topic):
     a = get_the_data(topic)
     list_of_x = [float(x) for x in a[0]]
     list_of_y = [float(y) for y in a[1]]
+    response = '\nВаш азимут дорівнює:'
 
     # x_start, y_start, x_end, y_end
     def find_the_asymuth(x_1, x_2, y_1, y_2):
@@ -169,18 +171,18 @@ def geography_with_calculations(subject, topic):
         dy = y_2 - y_1
         if dx == 0:  # Якщо різниця x = 0, то оцінюємо знак різниці y
             if dy > 0:  # Якщо різниця y > 0, то значення азимута дорівнює 0
-                print_bots_response(f"\n[Ньорд]: \nВаш азимут дорівнює: 0°")
-                to_continiue(topic_history)
+                print_bots_response(f"{response} 0°")
+                to_continue(topic_history)
             elif dy < 0:  # Якщо різниця y < 0, то значення азимута дорівнює 180
-                print_bots_response(f"\n[Ньорд]: \nВаш азимут дорівнює: 180°")
-                to_continiue(topic_history)
+                print_bots_response(f"\n{response} 180°")
+                to_continue(topic_history)
         elif dy == 0:  # Якщо різниця y = 0, то оцінюємо знак різниці x
             if dx > 0:  # Якщо різниця x > 0, то значення азимута дорівнює 90
-                print_bots_response(f"\n[Ньорд]: \nВаш азимут дорівнює: 90°")
-                to_continiue(topic_history)
+                print_bots_response(f"\n{response} 90°")
+                to_continue(topic_history)
             elif dx < 0:  # Якщо різниця x < 0, то значення азимута дорівнює 270
-                print_bots_response(f"\n[Ньорд]: \nВаш азимут дорівнює: 270°")
-                to_continiue(topic_history)
+                print_bots_response(f"\n{response} 270°")
+                to_continue(topic_history)
         else:
             tan = dy / dx
             # обчислення арктангенсу тангенсу кута між точками
@@ -188,11 +190,11 @@ def geography_with_calculations(subject, topic):
             # Радіани в градуси
             angle_degree = math.degrees(angle)
             if dx < 0:
-                print_bots_response(f"\n[Ньорд]: \nВаш азимут дорівнює: {180 + round(angle_degree, 3)}° ")
-                to_continiue(topic_history)
+                print_bots_response(f"\nВаш азимут дорівнює: {180 + round(angle_degree, 3)}° ")
+                to_continue(topic_history)
             else:
-                print_bots_response(f"\n[Ньорд]: \nВаш азимут дорівнює: {round(angle_degree, 3)}° ")
-                to_continiue(topic_history)
+                print_bots_response(f"\nВаш азимут дорівнює: {round(angle_degree, 3)}° ")
+                to_continue(topic_history)
 
     find_the_asymuth(list_of_x[0], list_of_x[1], list_of_y[0], list_of_y[1])
 
