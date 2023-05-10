@@ -1,0 +1,237 @@
+import datetime
+import sys
+import colorama
+from colorama import Fore
+import math
+import re
+from data_file import subjects, answers, non_static_subjects
+
+list_of_topics = (', '.join(subjects.keys())).split(", ")
+list_of_help_functions = ["допомога", "назад", "вихід"]
+topic_history = []
+response = " "
+
+
+def get_file_time():
+    date = datetime.datetime.now()
+    file_name = f'dialog-{date.strftime("%y-%m-%d-%H-%M")}.txt'
+    return file_name
+
+
+file_name = get_file_time()
+with open(file_name, 'a', encoding='utf-8') as f:
+    pass
+
+
+def print_bots_response(text, file_output=True):
+    bots_name ='[Ньорд]'
+    if file_output:
+        with open(file_name, 'a', encoding='utf-8') as f:
+            f.write(bots_name + ' ' + re.sub('\033\[[^m]*m', '', text) + '\n')
+    print(f'{bots_name}: {text}')
+
+
+def get_user_input():
+    text = input("[Користувач]:")
+    plain = "[Користувач]"
+    with open(file_name, 'a', encoding='utf-8') as f:
+        f.write(plain + re.sub('\033\[[^m]*m', '', text) + '\n')
+    return text
+
+
+def go_help_fun(text, topic_history):
+    if text == "назад":
+        topic = get_previous_topic(topic_history)
+        if topic == None:
+            topic_history.clear()
+            greet_user()
+        else:
+            topic_history.pop(topic_history.index(topic))
+            choose_subject(topic, topic_history)
+    elif text == "вихід":
+        to_exit()
+    elif text == "допомога":
+        print_help(topic_history)
+    else:
+        pass
+
+
+def get_previous_topic(topic_history):
+    if len(topic_history) == 1 or len(topic_history) == 0:
+        return None
+    else:
+        topic_history.pop(-1)
+        return topic_history[-1]
+
+
+def print_help(topic_history):
+    help_message = ""
+    if len(topic_history) == 0:
+        pass
+    else:
+        help_message += f"""Ви обрали операцію «{topic_history[-1]}»"""
+
+    help_message += f"""\nДля виходу, напишіть «вихід».\nДля повернення до останньої теми напишіть «назад»."""
+    print_bots_response(help_message)
+    to_continiue(topic_history)
+
+
+def greet_user():
+    text_with_greeting = f'\nВітаю, мене звати Ньорд. Ви можете задати мені питання з наступних тем: {", ".join(subjects.keys())}.Також у мене є додаткові функції - які саме поки секрет'
+    print_bots_response(text_with_greeting)
+    print(topic_history)
+    choose_subject(get_user_input(), topic_history)
+
+
+# function for getting right subject
+def choose_subject(subject, topic_history):
+    if subject.lower() in list_of_help_functions:
+        go_help_fun(subject, topic_history)
+    elif subject.lower() not in list_of_topics:
+        print_bots_response(f'Ви ввели некоректні дані — "{subject}", будь ласка, спробуйте ще раз. \nОберіть предмет:  математика, фізика, філологія, географія, астрономія')
+        choose_subject(get_user_input(), topic_history)
+    else:
+        topic_history.append(subject)
+        print(topic_history)
+        choose_topic(subject, topic_history)
+
+
+def choose_topic(text, topic_history):
+    print(topic_history)
+    print_bots_response(f"Обраний розділ: {text}")
+    print_bots_response("\n *".join([*subjects[text]]))
+    print_bots_response('\nОберіть, будь ласка, тему: \n')
+    users_choice = get_user_input()
+    if users_choice.lower() in list_of_help_functions:
+        print(topic_history)
+        go_help_fun(users_choice, topic_history)
+    elif users_choice in subjects[text]:
+        print(topic_history)
+        give_answer(text, users_choice, topic_history)
+    else:
+        print_bots_response(f"\nВи ввели некоректні дані — '{users_choice}', будь ласка спробуйте ще раз")
+        choose_topic(text, topic_history)
+
+
+def give_answer(subject, topic, topic_history):
+    answer = subjects[subject].index(topic)
+    if topic in non_static_subjects[subject]:
+        if subject == 'математика':
+            print_bots_response(f"\n[Ньорд]: \n{topic}: {answers[subject][answer]}")
+            mathimatics_with_calculations(subject, topic)
+        else:
+            geography_with_calculations(subject, topic)
+    else:
+        print_bots_response(f"\n[Ньорд]: \n{topic}: {answers[subject][answer]}")
+        to_continiue(topic_history)
+
+
+# Function which asks whether our user wants to countiniue
+def to_continiue(topic_history):
+    print_bots_response("Бажаєте, продовжити(Так\Ні): ")
+    users_decision = get_user_input()
+    if users_decision.lower() in list_of_help_functions:
+        go_help_fun(users_decision, topic_history)
+    elif (users_decision.lower()).strip() == "ні":
+        to_exit()
+    elif (users_decision.lower()).strip() == "так":
+        print_bots_response("""\nОберіть предмет:  математика, фізика, філологія, географія, астрономія""")
+        subject = get_user_input()
+        choose_subject(subject, topic_history)
+    else:
+        print_bots_response(f"\nЯ вас не розумію, ваша відповідь — '{users_decision}'.Спробуйте, будь ласка, ще раз.")
+        to_continiue(topic_history)
+
+
+# function which ends conversation with bot
+def to_exit():
+    print_bots_response("Дякую, що порозмовляли зі мною!")
+
+
+def mathimatics_with_calculations(subject, topic):
+    a = get_the_data(topic)
+    list_of_x = [float(x) for x in a[0]]
+    list_of_y = [float(y) for y in a[1]]
+    print_bots_response(f"\n[Ньорд]: \nx0 = {(int(list_of_x[0]) + int(list_of_x[1])) / 2}")
+    print_bots_response(f"\n[Ньорд]: \ny0 = {(int(list_of_y[0]) + int(list_of_y[1])) / 2}")
+    to_continiue(topic_history)
+
+
+def geography_with_calculations(subject, topic):
+    a = get_the_data(topic)
+    list_of_x = [float(x) for x in a[0]]
+    list_of_y = [float(y) for y in a[1]]
+
+    # x_start, y_start, x_end, y_end
+    def find_the_asymuth(x_1, x_2, y_1, y_2):
+        # обчислення різниць між координатами точок по осях x та y
+        dx = x_2 - x_1
+        dy = y_2 - y_1
+        if dx == 0:  # Якщо різниця x = 0, то оцінюємо знак різниці y
+            if dy > 0:  # Якщо різниця y > 0, то значення азимута дорівнює 0
+                print_bots_response(f"\n[Ньорд]: \nВаш азимут дорівнює: 0°")
+                to_continiue(topic_history)
+            elif dy < 0:  # Якщо різниця y < 0, то значення азимута дорівнює 180
+                print_bots_response(f"\n[Ньорд]: \nВаш азимут дорівнює: 180°")
+                to_continiue(topic_history)
+        elif dy == 0:  # Якщо різниця y = 0, то оцінюємо знак різниці x
+            if dx > 0:  # Якщо різниця x > 0, то значення азимута дорівнює 90
+                print_bots_response(f"\n[Ньорд]: \nВаш азимут дорівнює: 90°")
+                to_continiue(topic_history)
+            elif dx < 0:  # Якщо різниця x < 0, то значення азимута дорівнює 270
+                print_bots_response(f"\n[Ньорд]: \nВаш азимут дорівнює: 270°")
+                to_continiue(topic_history)
+        else:
+            tan = dy / dx
+            # обчислення арктангенсу тангенсу кута між точками
+            angle = math.atan(tan)
+            # Радіани в градуси
+            angle_degree = math.degrees(angle)
+            if dx < 0:
+                print_bots_response(f"\n[Ньорд]: \nВаш азимут дорівнює: {180 + round(angle_degree, 3)}° ")
+                to_continiue(topic_history)
+            else:
+                print_bots_response(f"\n[Ньорд]: \nВаш азимут дорівнює: {round(angle_degree, 3)}° ")
+                to_continiue(topic_history)
+
+    find_the_asymuth(list_of_x[0], list_of_x[1], list_of_y[0], list_of_y[1])
+
+
+def get_the_data(topic):
+    list_of_x = []
+    list_of_y = []
+    restart = True
+    r = 2
+    c = 0
+
+    def check_the_data(x, y):
+        try:
+            float(x) and float(y)
+            return True
+        except ValueError:
+            return False
+
+    while restart:
+        for i in range(r):
+            print_bots_response(f"\nВведіть значення точки x{i + 1 + c}: ")
+            x = get_user_input()
+            print_bots_response(f"\nВведіть значення точки y{i + 1 + c}: ")
+            y = get_user_input()
+            restart = False
+            if check_the_data(x, y):
+                list_of_x.append(x)
+                list_of_y.append(y)
+                if len(list_of_x) == 2 and len(list_of_y) == 2:
+                    return [[list_of_x[0], list_of_x[1]], [list_of_y[0], list_of_y[1]]]
+            else:
+                print_bots_response(f"\nВи ввели некоректне значення, будь ласка, спробуйте ще раз")
+                if i == 0:
+                    r = 2
+                else:
+                    r = 1
+                    c = 1
+                restart = True
+                break
+
+
+greet_user()
