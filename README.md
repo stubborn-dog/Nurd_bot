@@ -1,2 +1,1 @@
-# Telebot
-first steps
+# python_bot
