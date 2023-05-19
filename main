@@ -1,15 +1,13 @@
-import datetime
+import datetime, math, re, random, calendar
 from colorama import *
-import math
-import re
-from data_file import subjects, answers, non_static_subjects
+from data_file import subjects, answers, non_static_subjects,carols, anecdote, functions_for_non_static_subjects
 
 list_of_topics = (', '.join(subjects.keys())).split(", ")
 list_of_help_functions = ["допомога", "назад", "вихід"]
 topic_history = []
 n = '\n'
 
-# ---------------------Functions for saving file-----------------------------
+# ----------------------------------------Functions for saving the file-------------------------------------------------
 
 # Function for getting data about time
 
@@ -43,6 +41,28 @@ def get_user_input():
         f.write("[Користувач]:" + re.sub('\033\[[^m]*m', '', coloured_input) + '\n\n')
     return coloured_input
 
+# ---------------------Technical functions-----------------------------
+
+
+def to_exit():
+    print_bots_response("Дякую, що порозмовляли зі мною!")
+    quit()
+
+
+def to_continue():
+    print_bots_response("Бажаєте, продовжити та обрати нову тему(Так\Ні): ")
+    users_decision = get_user_input()
+    if users_decision.lower() in list_of_help_functions:
+        go_help_fun(users_decision)
+    elif (users_decision.lower()).strip() == "ні":
+        to_exit()
+    elif (users_decision.lower()).strip() == "так":
+        print_bots_response(f"""Оберіть предмет:\n{n.join(["  * " + item for item in subjects])}""")
+        add_to_the_list_of_topics(get_user_input())
+    else:
+        print_bots_response(f"\nЯ вас не розумію, ваша відповідь — '{users_decision}'. Спробуйте, будь ласка, ще раз.")
+        to_continue()
+
 
 def go_help_fun(text):
     if text == "назад":
@@ -52,7 +72,7 @@ def go_help_fun(text):
             greet_user()
         else:
             topic_history.pop(topic_history.index(topic))
-            choose_subject(topic)
+            add_to_the_list_of_topics(topic)
     elif text == "вихід":
         to_exit()
     elif text == "допомога":
@@ -81,75 +101,62 @@ def print_help():
     to_continue()
 
 
+def check_users_input(text, my_list):
+    if text.lower() in list_of_help_functions:
+        go_help_fun(text)
+        return None
+    elif text not in my_list:
+        print_bots_response(f'Ви ввели некоректні дані — "{text}", будь ласка, спробуйте ще раз.')
+        return False
+    else:
+        return True
+
+# ---------------------Semi-technical functions-----------------------------
+
+
 def greet_user():
     print_bots_response(f"""
 Вітаю, мене звати Ньорд. Ви можете задати мені питання з наступних тем:
 {n.join(["  * " + item for item in subjects])}
-\nТакож у мене є додаткові функції - які саме поки секрет
     """)
-    choose_subject(get_user_input())
+    add_to_the_list_of_topics(get_user_input())
 
 
-# function for getting right subject
-def choose_subject(subject):
-    if subject.lower() in list_of_help_functions:
-        go_help_fun(subject)
-    elif subject.lower() not in list_of_topics:
-        print_bots_response(f'Ви ввели некоректні дані — "{subject}", будь ласка, спробуйте ще раз. \nОберіть предмет:\n{n.join(["  * " + item for item in subjects])}')
-        choose_subject(get_user_input())
-    else:
+def add_to_the_list_of_topics(subject):
+    if check_users_input(subject, subjects):
         topic_history.append(subject)
         choose_topic(subject)
+    else:
+        print_bots_response(f'\nОберіть предмет:\n{n.join(["  * " + item for item in subjects])}')
+        add_to_the_list_of_topics(get_user_input())
 
 
 def choose_topic(text):
     print_bots_response(f'Обраний розділ:{text}\nОберіть, будь ласка, тему:\n{n.join(["  * " + item for item in subjects[text]])}')
     users_choice = get_user_input()
-    if users_choice.lower() in list_of_help_functions:
-        go_help_fun(users_choice)
-    elif users_choice in subjects[text]:
+    if check_users_input(users_choice, subjects[text]):
         give_answer(text, users_choice)
     else:
-        print_bots_response(f"\nВи ввели некоректні дані — '{users_choice}', будь ласка спробуйте ще раз")
         choose_topic(text)
 
 
 def give_answer(subject, topic):
     answer = subjects[subject].index(topic)
     if topic in non_static_subjects[subject]:
-        if subject == 'математика':
-            print_bots_response(f"\n[Ньорд]: \n{topic}: {answers[subject][answer]}")
-            mathimatics_with_calculations(subject, topic)
-        else:
-            geography_with_calculations(subject, topic)
+        eval(functions_for_non_static_subjects[topic])
     else:
         print_bots_response(f"\n[Ньорд]: \n{topic}: {answers[subject][answer]}")
         to_continue()
 
 
-# Function which asks whether our user wants to continue
-def to_continue():
-    print_bots_response("Бажаєте, продовжити(Так\Ні): ")
-    users_decision = get_user_input()
-    if users_decision.lower() in list_of_help_functions:
-        go_help_fun(users_decision)
-    elif (users_decision.lower()).strip() == "ні":
-        to_exit()
-    elif (users_decision.lower()).strip() == "так":
-        print_bots_response(f"""Оберіть предмет:\n{n.join(["  * " + item for item in subjects])}""")
-        choose_subject(get_user_input())
-    else:
-        print_bots_response(f"\nЯ вас не розумію, ваша відповідь — '{users_decision}'.Спробуйте, будь ласка, ще раз.")
-        to_continue()
+# ----------------------------------------Functions for non-static answers----------------------------------------------
 
 
-# function which ends conversation with bot
-def to_exit():
-    print_bots_response("Дякую, що порозмовляли зі мною!")
+#-------------------------Functions for the main topics--------------------------------------
 
 
-def mathimatics_with_calculations(subject, topic):
-    a = get_the_data(topic)
+def mathematics_with_calculations(subject, topic):
+    a = get_the_data()
     list_of_x = [float(x) for x in a[0]]
     list_of_y = [float(y) for y in a[1]]
     print_bots_response(f"\n[Ньорд]: \nx0 = {(int(list_of_x[0]) + int(list_of_x[1])) / 2}")
@@ -157,48 +164,56 @@ def mathimatics_with_calculations(subject, topic):
     to_continue()
 
 
-def geography_with_calculations(subject, topic):
-    a = get_the_data(topic)
+def geography_with_calculations():
+    a = get_the_data()
     list_of_x = [float(x) for x in a[0]]
     list_of_y = [float(y) for y in a[1]]
     response = '\nВаш азимут дорівнює:'
 
     # x_start, y_start, x_end, y_end
     def find_the_asymuth(x_1, x_2, y_1, y_2):
-        # обчислення різниць між координатами точок по осях x та y
+        # Calculate the differences between the coordinates of the points along the x and y axes
         dx = x_2 - x_1
         dy = y_2 - y_1
-        if dx == 0:  # Якщо різниця x = 0, то оцінюємо знак різниці y
-            if dy > 0:  # Якщо різниця y > 0, то значення азимута дорівнює 0
+        if dx == 0:
+            # If the difference in x is 0, evaluate the sign of the difference in y
+            if dy > 0:
+                # If the difference in y is greater than 0, the azimuth value is 0
                 print_bots_response(f"{response} 0°")
                 to_continue()
-            elif dy < 0:  # Якщо різниця y < 0, то значення азимута дорівнює 180
+            elif dy < 0:
+                # If the difference in y is less than 0, the azimuth value is 180
                 print_bots_response(f"\n{response} 180°")
                 to_continue()
-        elif dy == 0:  # Якщо різниця y = 0, то оцінюємо знак різниці x
-            if dx > 0:  # Якщо різниця x > 0, то значення азимута дорівнює 90
+        elif dy == 0:
+            # If the difference in y is 0, evaluate the sign of the difference in x
+            if dx > 0:
+                # If the difference in x is greater than 0, the azimuth value is 90
                 print_bots_response(f"\n{response} 90°")
                 to_continue()
-            elif dx < 0:  # Якщо різниця x < 0, то значення азимута дорівнює 270
+            elif dx < 0:
+                # If the difference in x is less than 0, the azimuth value is 270
                 print_bots_response(f"\n{response} 270°")
                 to_continue()
         else:
             tan = dy / dx
-            # обчислення арктангенсу тангенсу кута між точками
+            # Calculate the arctangent of the tangent of the angle between the points
             angle = math.atan(tan)
-            # Радіани в градуси
+            # Convert radians to degrees
             angle_degree = math.degrees(angle)
             if dx < 0:
-                print_bots_response(f"\nВаш азимут дорівнює: {180 + round(angle_degree, 3)}° ")
+                # If the difference in x is negative, add 180 degrees to the angle value
+                print_bots_response(f"\nYour azimuth is: {180 + round(angle_degree, 3)}° ")
                 to_continue()
             else:
-                print_bots_response(f"\nВаш азимут дорівнює: {round(angle_degree, 3)}° ")
+                print_bots_response(f"\nYour azimuth is: {round(angle_degree, 3)}° ")
                 to_continue()
 
     find_the_asymuth(list_of_x[0], list_of_x[1], list_of_y[0], list_of_y[1])
 
 
-def get_the_data(topic):
+
+def get_the_data():
     list_of_x = []
     list_of_y = []
     restart = True
@@ -212,6 +227,7 @@ def get_the_data(topic):
         except ValueError:
             return False
 
+    while restart:
         for i in range(r):
             print_bots_response(f"\nВведіть значення точки x{i + 1 + c}: ")
             x = get_user_input()
@@ -232,6 +248,73 @@ def get_the_data(topic):
                     c = 1
                 restart = True
                 break
+
+
+#---------------------------------Functions for the additional topics-----------------------
+
+def sing_carol():
+    print_bots_response(f"""Яку з поданих нижче колядок ви хочете почути: \n{n.join([' * ' + carol for carol in carols])}""")
+    chosen_carol = get_user_input()
+    if check_users_input(chosen_carol, carols):
+        print_bots_response(f'{chosen_carol}: {carols[chosen_carol]}')
+        to_continue()
+    else:
+        sing_carol()
+
+
+def tell_anecdote():
+    random_anecdote = random.choice(anecdote)
+    print_bots_response(random_anecdote)
+    anecdote.pop(anecdote.index(random_anecdote))
+    while len(anecdote) > 0:
+        print_bots_response("Бажаєте ще один анекдот(так\ні)?")
+        users_choice = get_user_input()
+        if check_users_input(users_choice, ["так", "ні"]):
+            if users_choice == "так":
+                tell_anecdote()
+            else:
+                print_bots_response(f"Гарно посміялися...Шкода, що ти не хочеш почути ще, бо в мене їх ще {len(anecdote)} є")
+                break
+        else:
+            continue #asking the user again wether he wants to return to the beginning of the cycle"
+
+    else:
+        print_bots_response("Вибачай немає вже анекдотів. Все тобі розпатякав!!!")
+
+    to_continue()
+
+
+def tell_the_date():
+    current_date = datetime.date.today().strftime("%d.%m.%Y")#getting the date
+    print_bots_response(current_date)
+    to_continue()
+
+
+def show_calender():
+    # Get the current date
+    current_date = datetime.date.today()
+
+    # Get the Ukrainian names of weekdays
+    ukrainian_weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд']
+
+    # Function to format a day with red highlighting for the current date
+    def format_day(day, weekday):
+        if day == current_date.day:
+            return f"\033[31m{day}\033[0m"
+        if day != 0:
+            return str(day)
+        return " "
+    print_bots_response("\n")
+    # Print the header with the names of weekdays
+    print(" ".join(weekday for weekday in ukrainian_weekdays))
+
+    # Print the calendar with the current date highlighted and Ukrainian names of weekdays
+    cal = calendar.monthcalendar(current_date.year, current_date.month)
+    formatted_cal = [[format_day(day, ukrainian_weekdays[idx]) for idx, day in enumerate(week)] for week in cal]
+
+    for week in formatted_cal:
+        print(" ".join(str(day).rjust(2) for day in week))
+    to_continue()
 
 
 greet_user()
