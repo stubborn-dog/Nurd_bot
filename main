@@ -57,7 +57,7 @@ def to_continue():
     elif (users_decision.lower()).strip() == "ні":
         to_exit()
     elif (users_decision.lower()).strip() == "так":
-        print_bots_response(f"""Оберіть предмет:\n{n.join(["  * " + item for item in subjects])}""")
+        print_bots_response(f"""Оберіть предмет:\n{n.join([f'{count}. {value}' for count, value in enumerate(subjects, start=1)])}""")
         add_to_the_list_of_topics(get_user_input())
     else:
         print_bots_response(f"\nЯ вас не розумію, ваша відповідь — '{users_decision}'. Спробуйте, будь ласка, ще раз.")
@@ -65,7 +65,7 @@ def to_continue():
 
 
 def go_help_fun(text):
-    if text == "назад":
+    if (text.lower()).strip() == "назад":
         topic = get_previous_topic()
         if topic == None:
             topic_history.clear()
@@ -73,9 +73,9 @@ def go_help_fun(text):
         else:
             topic_history.pop(topic_history.index(topic))
             add_to_the_list_of_topics(topic)
-    elif text == "вихід":
+    elif (text.lower()).strip()  == "вихід":
         to_exit()
-    elif text == "допомога":
+    elif (text.lower()).strip()  == "допомога":
         print_help()
     else:
         pass
@@ -117,7 +117,7 @@ def check_users_input(text, my_list):
 def greet_user():
     print_bots_response(f"""
 Вітаю, мене звати Ньорд. Ви можете задати мені питання з наступних тем:
-{n.join(["  * " + item for item in subjects])}
+{n.join([f'{count}. {value}' for count, value in enumerate(subjects, start=1)])}\nТакож, якщо у вас виникли труднощі, ви можете написати "допомога".
     """)
     add_to_the_list_of_topics(get_user_input())
 
@@ -127,12 +127,12 @@ def add_to_the_list_of_topics(subject):
         topic_history.append(subject)
         choose_topic(subject)
     else:
-        print_bots_response(f'\nОберіть предмет:\n{n.join(["  * " + item for item in subjects])}')
+        print_bots_response(f'\nОберіть предмет:\n{n.join([f"{count}. {value}" for count, value in enumerate(subjects, start=1)])}')
         add_to_the_list_of_topics(get_user_input())
 
 
 def choose_topic(text):
-    print_bots_response(f'Обраний розділ:{text}\nОберіть, будь ласка, тему:\n{n.join(["  * " + item for item in subjects[text]])}')
+    print_bots_response(f'Обраний розділ: {text}\nОберіть, будь ласка, тему:\n{n.join([f"{count}. {value}" for count, value in enumerate(subjects[text], start=1)])}')
     users_choice = get_user_input()
     if check_users_input(users_choice, subjects[text]):
         give_answer(text, users_choice)
@@ -145,7 +145,7 @@ def give_answer(subject, topic):
     if topic in non_static_subjects[subject]:
         eval(functions_for_non_static_subjects[topic])
     else:
-        print_bots_response(f"\n[Ньорд]: \n{topic}: {answers[subject][answer]}")
+        print_bots_response(f"\n{topic}: {answers[subject][answer]}")
         to_continue()
 
 
@@ -155,12 +155,12 @@ def give_answer(subject, topic):
 #-------------------------Functions for the main topics--------------------------------------
 
 
-def mathematics_with_calculations(subject, topic):
+def mathematics_with_calculations():
     a = get_the_data()
     list_of_x = [float(x) for x in a[0]]
     list_of_y = [float(y) for y in a[1]]
-    print_bots_response(f"\n[Ньорд]: \nx0 = {(int(list_of_x[0]) + int(list_of_x[1])) / 2}")
-    print_bots_response(f"\n[Ньорд]: \ny0 = {(int(list_of_y[0]) + int(list_of_y[1])) / 2}")
+    print_bots_response(f" \nx0 = {(int(list_of_x[0]) + int(list_of_x[1])) / 2}")
+    print_bots_response(f" \ny0 = {(int(list_of_y[0]) + int(list_of_y[1])) / 2}")
     to_continue()
 
 
@@ -203,10 +203,10 @@ def geography_with_calculations():
             angle_degree = math.degrees(angle)
             if dx < 0:
                 # If the difference in x is negative, add 180 degrees to the angle value
-                print_bots_response(f"\nYour azimuth is: {180 + round(angle_degree, 3)}° ")
+                print_bots_response(f"{response}: {180 + round(angle_degree, 3)}° ")
                 to_continue()
             else:
-                print_bots_response(f"\nYour azimuth is: {round(angle_degree, 3)}° ")
+                print_bots_response(f"{response}: {round(angle_degree, 3)}° ")
                 to_continue()
 
     find_the_asymuth(list_of_x[0], list_of_x[1], list_of_y[0], list_of_y[1])
@@ -253,7 +253,7 @@ def get_the_data():
 #---------------------------------Functions for the additional topics-----------------------
 
 def sing_carol():
-    print_bots_response(f"""Яку з поданих нижче колядок ви хочете почути: \n{n.join([' * ' + carol for carol in carols])}""")
+    print_bots_response(f"""Яку з поданих нижче колядок ви хочете почути: \n{n.join([f"{count}. {value}" for count, value in enumerate(carols, start=1)])}""")
     chosen_carol = get_user_input()
     if check_users_input(chosen_carol, carols):
         print_bots_response(f'{chosen_carol}: {carols[chosen_carol]}')
@@ -270,10 +270,10 @@ def tell_anecdote():
         print_bots_response("Бажаєте ще один анекдот(так\ні)?")
         users_choice = get_user_input()
         if check_users_input(users_choice, ["так", "ні"]):
-            if users_choice == "так":
+            if users_choice.lower() == "так":
                 tell_anecdote()
             else:
-                print_bots_response(f"Гарно посміялися...Шкода, що ти не хочеш почути ще, бо в мене їх ще {len(anecdote)} є")
+                print_bots_response(f"Гарно посміялися...Шкода, що ти не хочеш почути ще, бо в мене їх ще {len(anecdote)} є.")
                 break
         else:
             continue #asking the user again wether he wants to return to the beginning of the cycle"
